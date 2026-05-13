@@ -71,3 +71,63 @@ client = anthropic.Anthropic(
 # print(response.content[0].text)
 
 ### PARALLEL PROMPTS
+# from concurrent.futures import ThreadPoolExecutor
+
+# stakeholders = ["marketing team", "sales team", "product team", "customer support team"]
+
+# def parallel(question, stakeholders):
+#     with ThreadPoolExecutor() as executor:
+#         futures = []
+#         for stakeholder in stakeholders:
+#             future = executor.submit(
+#                 client.messages.create,
+#                 model="claude-haiku-4-5-20251001",
+#                 max_tokens=1000,
+#                 messages=[
+#                     {"role": "user", "content": f"{question} from the perspective of the {stakeholder}."}
+#                 ]
+#             )
+#             futures.append(future)
+        
+#         results = [future.result().content[0].text for future in futures]
+    
+#     return results
+
+# impact_result = parallel(
+#     """What is the impact of new investment coming in Q4 ?""",
+#     stakeholders,
+# )
+
+# for result in impact_result:
+#     print(result)
+#     print("-" * 100)
+
+### ROUTING WORKFLOW
+
+teams = ["Technical Support", "Finance Team", "General Inquiries"]
+
+def route(teams, question):
+    routing_prompt = f"""You are a helpful assistant that routes customer questions to the appropriate team. 
+    The teams you can route to are: {', '.join(teams)}.
+<reasoning>
+    Brief explanation of why this ticket should be routed to a specific team.
+    Consider key terms, user intent, and urgency level.
+    </reasoning>
+
+    <selection>
+    The chosen team name
+    </selection>
+    """
+    
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1000,
+        messages=[
+            {"role": "user", "content": f"{routing_prompt} Customer question: {question}"}
+        ]
+    )
+    
+    return response.content[0].text.strip()
+
+result = route(teams, "I have a question about my recent bill. I think I was overcharged and I want to understand the charges better.")
+print(result)
